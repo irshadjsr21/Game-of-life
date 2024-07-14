@@ -5,6 +5,10 @@ export default {
   content: ["./src/**/*.tsx"],
   theme: {
     extend: {
+      colors: {
+        background: '#fffafb',
+        text: '#131515'
+      },
       fontFamily: {
         sans: ["var(--font-geist-sans)", ...fontFamily.sans],
       },
