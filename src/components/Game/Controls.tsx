@@ -1,5 +1,14 @@
-import { Button } from "../Button";
-import { Slider } from "../Slider";
+import { Button } from "../ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectLabel,
+  SelectItem,
+} from "../ui/select";
+import { Slider } from "../ui/slider";
 
 export interface ControlsProps {
   onRandom: () => void;
@@ -11,6 +20,8 @@ export interface ControlsProps {
   isStarted: boolean;
   speed: number;
   onSpeedChange: (speed: number) => void;
+  onNextGeneration: () => void;
+  generation: number;
 }
 
 export const Controls: React.FC<ControlsProps> = ({
@@ -23,29 +34,31 @@ export const Controls: React.FC<ControlsProps> = ({
   isStarted,
   speed,
   onSpeedChange,
+  onNextGeneration,
+  generation,
 }) => {
   return (
-    <div className="flex items-center justify-center gap-4">
-      <div className="flex flex-col">
-        <p className="mr-2">Drawing Mode</p>
-        {drawingModesList.map((mode) => (
-          <div key={mode.id} className="flex">
-            <input
-              type="radio"
-              id={mode.id}
-              name="drawingMode"
-              value={mode.id}
-              onChange={(e) => {
-                onDrawingModeChange(e.target.value);
-              }}
-              checked={drawingMode === mode.id}
-              className="mr-2"
-              disabled={isStarted}
-            />
-            <label htmlFor={mode.id}>{mode.name}</label>
-          </div>
-        ))}
-      </div>
+    <div className="mx-2 flex flex-wrap items-center justify-center gap-4">
+      <Select
+        value={drawingMode}
+        onValueChange={onDrawingModeChange}
+        disabled={isStarted}
+        name="drawingMode"
+      >
+        <SelectTrigger className="w-[120px]">
+          <SelectValue placeholder="Select drawing mode" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Drawing Mode</SelectLabel>
+            {drawingModesList.map((mode) => (
+              <SelectItem key={mode.id} value={mode.id}>
+                {mode.name}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        </SelectContent>
+      </Select>
       <Button
         onClick={() => {
           onStartOrStop();
@@ -53,21 +66,26 @@ export const Controls: React.FC<ControlsProps> = ({
       >
         {isStarted ? "Stop" : "Start"}
       </Button>
+      <Button onClick={onNextGeneration} disabled={isStarted}>
+        Next ({generation})
+      </Button>
       <Button onClick={onRandom} disabled={isStarted}>
         Random
       </Button>
       <Button onClick={onClear} disabled={isStarted}>
         Clear
       </Button>
-      <Slider
-        id={"speed"}
-        name={"Speed"}
-        value={speed}
-        onChange={onSpeedChange}
-        width={60}
-        min={1}
-        max={20}
-      />
+      <div className="flex flex-col">
+        <p className="mb-2 text-sm">Speed</p>
+        <Slider
+          name={"speed"}
+          value={[speed]}
+          onValueChange={(v) => onSpeedChange(v[0] ?? 0)}
+          className="w-[100px]"
+          min={1}
+          max={40}
+        />
+      </div>
     </div>
   );
 };

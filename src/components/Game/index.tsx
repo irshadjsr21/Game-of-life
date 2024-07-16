@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStateWithRef } from "~/hooks";
 import {
   GameOfLife,
@@ -9,6 +9,7 @@ import {
   type DrawBoardOnCanvasOptions,
   addEventListenersToCanvas,
 } from "~/utils";
+import { Canvas } from "./Canvas";
 import { Controls } from "./Controls";
 
 const DEFAULT_CELL_DISPLAY_PIXEL = 100;
@@ -17,7 +18,7 @@ const DEFAULT_BOARD_SIZE = 30;
 const canvasColors: DrawBoardOnCanvasOptions["colors"] = {
   alive: "#339989",
   dead: "#fff",
-  border: "#2b2c28",
+  border: "#333",
 };
 
 const drawingModesList = [
@@ -38,12 +39,15 @@ const drawingModesList = [
 export const Game = () => {
   const [drawingMode, setDrawingMode, drawingModeRef] =
     useStateWithRef("toggle");
+
   const [isStarted, setIsStarted, isStartedRef] = useStateWithRef(false);
   const [animationSpeed, setAnimationSpeed, animationSpeedRef] =
     useStateWithRef(10);
 
   const canvas = useRef<HTMLCanvasElement>(null);
   const game = useRef<GameOfLife>(new GameOfLife(DEFAULT_BOARD_SIZE));
+  const [generation, setGeneration] = useState(0);
+
   const interval = useRef<NodeJS.Timeout | undefined>(undefined);
 
   useEffect(() => {
@@ -70,8 +74,7 @@ export const Game = () => {
 
   useEffect(() => {
     if (isStarted) {
-      game.current.nextGeneration();
-      draw();
+      onNextGeneration();
       setTimer();
     } else {
       if (interval.current) {
@@ -85,8 +88,7 @@ export const Game = () => {
     const speedInterval = 3000 / animationSpeedRef.current;
 
     interval.current = setTimeout(() => {
-      game.current.nextGeneration();
-      draw();
+      onNextGeneration();
       setTimer();
     }, speedInterval);
   };
@@ -105,7 +107,9 @@ export const Game = () => {
   const draw = useCallback(() => {
     if (!canvas.current) return;
 
-    drawBoardOnCanvas(canvas.current, game.current.getBoard(), {
+    setGeneration(game.current.generations);
+
+    drawBoardOnCanvas(canvas.current, game.current.board, {
       cellSize: DEFAULT_CELL_DISPLAY_PIXEL,
       colors: canvasColors,
     });
@@ -125,14 +129,14 @@ export const Game = () => {
     draw();
   }, []);
 
+  const onNextGeneration = useCallback(() => {
+    game.current.nextGeneration();
+    draw();
+  }, []);
+
   return (
-    <>
-      <div className="mb-4 mt-4 flex h-[calc(100vh-200px)] w-full justify-center overflow-scroll">
-        <canvas
-          ref={canvas}
-          className={isStarted ? "cursor-not-allowed" : "cursor-pointer"}
-        />
-      </div>
+    <div className="align-center flex h-[calc(100vh-100px)] flex-col justify-center justify-evenly">
+      <Canvas isStarted={isStarted} ref={canvas} />
       <Controls
         onRandom={onRandom}
         drawingMode={drawingMode}
@@ -143,7 +147,9 @@ export const Game = () => {
         isStarted={isStarted}
         speed={animationSpeed}
         onSpeedChange={setAnimationSpeed}
+        onNextGeneration={onNextGeneration}
+        generation={generation}
       />
-    </>
+    </div>
   );
 };
