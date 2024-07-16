@@ -1,4 +1,4 @@
-export function throttle<A extends any[]>(
+export function throttle<A extends unknown[]>(
   fn: (...args: A) => void,
   wait = 300
 ) {
