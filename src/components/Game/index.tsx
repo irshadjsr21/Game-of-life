@@ -45,17 +45,42 @@ export const Game = () => {
     useStateWithRef(10);
 
   const canvas = useRef<HTMLCanvasElement>(null);
+  const [boardSize, setBoardSize, boardSizeRef] =
+    useStateWithRef(DEFAULT_BOARD_SIZE);
   const game = useRef<GameOfLife>(new GameOfLife(DEFAULT_BOARD_SIZE));
   const [generation, setGeneration] = useState(0);
+  const [isStartingBoard, setIsStartingBoard] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(false);
 
   const interval = useRef<NodeJS.Timeout | undefined>(undefined);
 
+  const onBoardUpdate = useCallback(() => {
+    setGeneration(game.current.generations);
+    setIsStartingBoard(game.current.isStartingBoard);
+    setIsEmpty(game.current.isEmpty);
+
+    if (game.current.isEmpty) {
+      setIsStarted(false);
+    }
+  }, []);
+
   useEffect(() => {
+    game.current.addBoardUpdateListener(onBoardUpdate);
     game.current.fillRandom();
+    draw();
+
+    return () => {
+      game.current.removeListeners();
+    };
+  }, []);
+
+  useEffect(() => {
+    game.current.updateBoardSize(boardSize);
     resize();
     draw();
+
     if (canvas.current) {
-      return addEventListenersToCanvas(canvas.current, DEFAULT_BOARD_SIZE, {
+      return addEventListenersToCanvas(canvas.current, boardSize, {
         onCellClick: (x, y) => {
           if (isStartedRef.current) return;
 
@@ -70,7 +95,7 @@ export const Game = () => {
         },
       });
     }
-  }, []);
+  }, [boardSize]);
 
   useEffect(() => {
     if (isStarted) {
@@ -97,7 +122,7 @@ export const Game = () => {
     if (!canvas.current) return;
 
     const { width, height } = calulateBoardSize(
-      DEFAULT_BOARD_SIZE,
+      boardSizeRef.current,
       DEFAULT_CELL_DISPLAY_PIXEL
     );
 
@@ -106,8 +131,6 @@ export const Game = () => {
 
   const draw = useCallback(() => {
     if (!canvas.current) return;
-
-    setGeneration(game.current.generations);
 
     drawBoardOnCanvas(canvas.current, game.current.board, {
       cellSize: DEFAULT_CELL_DISPLAY_PIXEL,
@@ -129,6 +152,11 @@ export const Game = () => {
     draw();
   }, []);
 
+  const onReset = useCallback(() => {
+    game.current.resetBoard();
+    draw();
+  }, []);
+
   const onNextGeneration = useCallback(() => {
     game.current.nextGeneration();
     draw();
@@ -143,12 +171,17 @@ export const Game = () => {
         drawingModesList={drawingModesList}
         onDrawingModeChange={setDrawingMode}
         onClear={onClear}
+        onReset={onReset}
         onStartOrStop={onStartOrStop}
         isStarted={isStarted}
         speed={animationSpeed}
         onSpeedChange={setAnimationSpeed}
         onNextGeneration={onNextGeneration}
         generation={generation}
+        isStartingBoard={isStartingBoard}
+        isEmpty={isEmpty}
+        boardSize={boardSize}
+        onBoardSizeChange={setBoardSize}
       />
     </div>
   );

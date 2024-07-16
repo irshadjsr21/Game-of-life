@@ -26,7 +26,7 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, CanvasProps>(
     };
 
     return (
-      <div className={`mb-4 mt-4 flex justify-center overflow-scroll`}>
+      <div className={`mb-4 mt-4 flex justify-center overflow-auto`}>
         <canvas
           ref={ref}
           style={getSizeStyle()}
